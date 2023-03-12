@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Iterable, List, Tuple
+from typing import Any, Iterable, List, Tuple, Dict
 
 from typing_extensions import Protocol
 
@@ -23,7 +23,9 @@ def central_difference(f: Any, *vals: Any, arg: int = 0, epsilon: float = 1e-6) 
         An approximation of $f'_i(x_0, \ldots, x_{n-1})$
     """
     # TODO: Implement for Task 1.1.
-    raise NotImplementedError('Need to implement for Task 1.1')
+    vals_plus = [x for x in vals]
+    vals_plus[arg] += epsilon
+    return (f(*vals_plus) - f(*vals)) / epsilon
 
 
 variable_count = 1
@@ -62,7 +64,40 @@ def topological_sort(variable: Variable) -> Iterable[Variable]:
         Non-constant Variables in topological order starting from the right.
     """
     # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+    queue:Iterable[Variable] = []
+    ret = []
+    id2var = {}
+    id2cnt = {}
+    queue.append(variable)
+    while queue:
+        now = queue.pop()
+        if now.unique_id in id2var:
+            continue
+        id2var[now.unique_id] =  now
+        if now.unique_id not in id2cnt:
+            id2cnt[now.unique_id] = 0
+        for p in now.parents:
+            if p.is_constant():
+                continue
+            if p.unique_id not in id2cnt:
+                id2cnt[p.unique_id] = 0
+            id2cnt[p.unique_id] += 1
+            queue.append(p)
+    for i, cnt in id2cnt.items():
+        if cnt == 0:
+            queue.append(i)
+    while queue:
+        nowid = queue.pop()
+        now = id2var[nowid]
+        ret.append(now)
+        for p in now.parents:
+            if p.is_constant():
+                continue
+            id2cnt[p.unique_id] -= 1
+            if id2cnt[p.unique_id] == 0:
+                queue.append(p.unique_id)
+    return ret
+
 
 
 def backpropagate(variable: Variable, deriv: Any) -> None:
@@ -77,7 +112,24 @@ def backpropagate(variable: Variable, deriv: Any) -> None:
     No return. Should write to its results to the derivative values of each leaf through `accumulate_derivative`.
     """
     # TODO: Implement for Task 1.4.
-    raise NotImplementedError('Need to implement for Task 1.4')
+    vars = topological_sort(variable)
+    id2var:Dict[int, Variable] = dict()
+    id2deri:Dict[int, float] = dict()
+    for v in vars:
+        id2var[v.unique_id] = v
+        id2deri[v.unique_id] = 0.0
+    id2deri[variable.unique_id] = deriv
+    for v in vars:
+        if v.is_leaf():
+            continue
+        tuples = v.chain_rule(id2deri[v.unique_id])
+        for (parent, deriv_p ) in tuples:
+            if parent.is_leaf():
+                parent.accumulate_derivative(deriv_p)
+            else: 
+                id2deri[parent.unique_id] += deriv_p
+
+        
 
 
 @dataclass

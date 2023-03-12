@@ -4,6 +4,7 @@ import pytest
 
 import minitorch
 from minitorch import Context, ScalarFunction, ScalarHistory
+from minitorch.autodiff import topological_sort
 
 # ## Task 1.3 - Tests for the autodifferentiation machinery.
 
@@ -141,3 +142,20 @@ def test_backprop4() -> None:
     var4 = Function1.apply(var2, var3)
     var4.backward(d_output=5)
     assert var0.derivative == 10
+
+
+@pytest.mark.task1_4
+def test_topological() -> None:
+    # Example 4: F1(F1(0, v1), F1(0, v1))
+    var0 = minitorch.Scalar(0)
+    var1 = Function1.apply(0, var0)
+    var2 = Function1.apply(0, var1)
+    var3 = Function1.apply(0, var1)
+    var4 = Function1.apply(var2, var3)
+    vars = topological_sort(var4)
+    print(vars)
+    assert vars[0] == var4
+    assert vars[1] == var2
+    assert vars[2] == var3
+    assert vars[3] == var1
+    assert vars[4] == var0

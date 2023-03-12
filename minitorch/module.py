@@ -74,7 +74,7 @@ class Module:
         # TODO: Implement for Task 0.4.
         ret = list(self._parameters.values())
         for sub_module in self._modules.values():
-            ret.extend(sub_module.named_parameters())
+            ret.extend(sub_module.parameters())
         return ret
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
