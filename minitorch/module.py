@@ -32,12 +32,16 @@ class Module:
     def train(self) -> None:
         "Set the mode of this module and all descendent modules to `train`."
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        self.training = True
+        for sub_module in self._modules.values():
+            sub_module.train()
 
     def eval(self) -> None:
         "Set the mode of this module and all descendent modules to `eval`."
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        self.training = False
+        for sub_module in self._modules.values():
+            sub_module.eval()
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """
@@ -47,13 +51,31 @@ class Module:
         Returns:
             The name and `Parameter` of each ancestor parameter.
         """
+
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        def collect(
+            m: Module, prefix: Sequence[str]
+        ) -> Sequence[Tuple[str, Parameter]]:
+            ret = []
+            for k, v in m._parameters.items():
+                prefix.append(k)
+                ret.append((".".join(prefix), v))
+                prefix.pop()
+            for sub_name, sub_module in m._modules.items():
+                prefix.append(sub_name)
+                ret.extend(collect(sub_module, prefix))
+                prefix.pop()
+            return ret
+
+        return collect(self, [])
 
     def parameters(self) -> Sequence[Parameter]:
         "Enumerate over all the parameters of this module and its descendents."
         # TODO: Implement for Task 0.4.
-        raise NotImplementedError('Need to implement for Task 0.4')
+        ret = list(self._parameters.values())
+        for sub_module in self._modules.values():
+            ret.extend(sub_module.named_parameters())
+        return ret
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """
